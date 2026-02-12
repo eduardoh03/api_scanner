@@ -4,46 +4,46 @@ from app.scanners.base import BaseScanner, ScanFinding
 # Security headers with expected configuration
 SECURITY_HEADERS = {
     "Strict-Transport-Security": {
-        "severity": "high",
+        "severity": "medium",
         "title": "Header HSTS ausente",
-        "description": "O header Strict-Transport-Security não está presente. Isso permite ataques de downgrade HTTPS → HTTP.",
-        "recommendation": "Adicionar header 'Strict-Transport-Security: max-age=31536000; includeSubDomains; preload'.",
+        "description": "O header Strict-Transport-Security não está presente. Recomendado para forçar HTTPS.",
+        "recommendation": "Adicionar header 'Strict-Transport-Security: max-age=31536000; includeSubDomains'.",
     },
     "X-Content-Type-Options": {
-        "severity": "medium",
+        "severity": "low",
         "title": "Header X-Content-Type-Options ausente",
-        "description": "Sem este header, o navegador pode interpretar arquivos com MIME type incorreto (MIME sniffing).",
+        "description": "Sem este header, o navegador pode tentar interpretar arquivos incorretamente.",
         "recommendation": "Adicionar header 'X-Content-Type-Options: nosniff'.",
     },
     "X-Frame-Options": {
-        "severity": "medium",
+        "severity": "low",
         "title": "Header X-Frame-Options ausente",
-        "description": "Sem proteção contra clickjacking. A página pode ser embutida em iframes maliciosos.",
+        "description": "Pode permitir clickjacking em cenários específicos.",
         "recommendation": "Adicionar header 'X-Frame-Options: DENY' ou 'SAMEORIGIN'.",
     },
     "Content-Security-Policy": {
-        "severity": "high",
+        "severity": "medium",
         "title": "Header CSP ausente",
-        "description": "Content-Security-Policy não encontrado. Isso aumenta a superfície de ataque para XSS.",
-        "recommendation": "Implementar uma política CSP adequada para restringir fontes de conteúdo.",
+        "description": "Content-Security-Policy é uma camada adicional de segurança contra XSS.",
+        "recommendation": "Implementar 'Content-Security-Policy' para restringir fontes de script.",
     },
     "Permissions-Policy": {
         "severity": "low",
         "title": "Header Permissions-Policy ausente",
-        "description": "Sem controle sobre APIs do navegador (câmera, microfone, geolocalização).",
-        "recommendation": "Adicionar header Permissions-Policy para restringir acesso a APIs sensíveis.",
+        "description": "Permite restringir o acesso a APIs do navegador.",
+        "recommendation": "Considerar adicionar 'Permissions-Policy'.",
     },
     "Referrer-Policy": {
         "severity": "low",
         "title": "Header Referrer-Policy ausente",
-        "description": "Sem controle sobre informações de referrer enviadas a outros sites.",
-        "recommendation": "Adicionar header 'Referrer-Policy: strict-origin-when-cross-origin'.",
+        "description": "Controla quanta informação de referência é enviada.",
+        "recommendation": "Adicionar 'Referrer-Policy: strict-origin-when-cross-origin'.",
     },
     "X-XSS-Protection": {
-        "severity": "low",
+        "severity": "info",
         "title": "Header X-XSS-Protection ausente",
-        "description": "Proteção básica contra XSS do navegador não ativada (legado, mas ainda útil).",
-        "recommendation": "Adicionar header 'X-XSS-Protection: 1; mode=block'.",
+        "description": "Header legado, browsers modernos já possuem filtros XSS melhores.",
+        "recommendation": "Opcional. Pode usar 'X-XSS-Protection: 1; mode=block'.",
     },
 }
 
