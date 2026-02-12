@@ -120,10 +120,17 @@ class HeaderAnalyzer(BaseScanner):
         for header_name, description in DANGEROUS_HEADERS.items():
             value = headers.get(header_name)
             if value:
+                severity = "low"
+                if header_name == "Server":
+                    # Only flag as low/issue if it contains a version number
+                    if not any(char.isdigit() for char in value):
+                        severity = "info"
+                        description = "O banner do servidor foi encontrado, mas não expõe versão explícita."
+
                 findings.append(
                     ScanFinding(
                         module=self.name,
-                        severity="low",
+                        severity=severity,
                         title=f"Header '{header_name}' expõe informação",
                         description=f"{description} Valor encontrado: '{value}'.",
                         recommendation=f"Remover ou ocultar o header '{header_name}' na configuração do servidor.",

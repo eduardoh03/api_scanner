@@ -25,7 +25,15 @@ class CVELookup(BaseScanner):
             # Detect from Server header
             server = headers.get("Server", "")
             if server:
-                technologies.append(server.split("/")[0].strip())
+                # Ignore generic values or domains
+                if "." in server and not any(
+                    x in server.lower() for x in ["apache", "nginx", "iis"]
+                ):
+                    pass  # Likely a domain name like "github.com", ignore
+                else:
+                    tech = server.split("/")[0].strip()
+                    if len(tech) > 2:  # Ignore short abbreviations
+                        technologies.append(tech)
 
             # Detect from X-Powered-By
             powered_by = headers.get("X-Powered-By", "")
@@ -47,6 +55,8 @@ class CVELookup(BaseScanner):
                 "django": "Django",
                 "express": "Express.js",
                 "spring": "Spring",
+                "jquery": "jQuery",
+                "bootstrap": "Bootstrap",
             }
 
             for signature, tech_name in tech_signatures.items():
@@ -56,7 +66,15 @@ class CVELookup(BaseScanner):
         except Exception:
             pass
 
-        return list(set(technologies))
+        # Filter out common false positives (domains as tech)
+        clean_technologies = []
+        for tech in set(technologies):
+            # If tech is just a domain name (contains dot but not version/product like "Node.js")
+            if "." in tech and not any(c.isdigit() for c in tech) and "js" not in tech.lower():
+                continue
+            clean_technologies.append(tech)
+
+        return clean_technologies
 
     async def _search_cves(self, keyword: str) -> list[dict]:
         """Search NIST NVD API for CVEs related to a keyword."""

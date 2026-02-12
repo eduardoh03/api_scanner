@@ -36,9 +36,49 @@ SEVERITY_SCORES = {
 
 
 def calculate_risk_score(findings: list[ScanFinding]) -> int:
-    """Calculate overall risk score (0-100) based on findings."""
-    total = sum(SEVERITY_SCORES.get(f.severity, 0) for f in findings)
-    return min(total, 100)
+    """
+    Calculate overall risk score (0-100) based on findings.
+    Uses a weighted decay formula so multiple low severity findings don't
+    artificially inflate the score to 100.
+    """
+    if not findings:
+        return 0
+
+    # Counts per severity
+    counts = {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0,
+    }
+
+    for f in findings:
+        if f.severity in counts:
+            counts[f.severity] += 1
+
+    # Base weights
+    score = 0.0
+
+    # Critical: starts at 40, each additional adds less (decay 0.7)
+    # 1 critical = 40, 2 = 68, 3 = 87...
+    for i in range(counts["critical"]):
+        score += 40 * (0.7**i)
+
+    # High: starts at 20, decay 0.6
+    for i in range(counts["high"]):
+        score += 20 * (0.6**i)
+
+    # Medium: starts at 8, decay 0.5
+    for i in range(counts["medium"]):
+        score += 8 * (0.5**i)
+
+    # Low: starts at 2, decay 0.5
+    for i in range(counts["low"]):
+        score += 2 * (0.5**i)
+
+    # Cap at 100
+    return int(min(score, 100))
 
 
 async def _run_scanners(target: str) -> list[ScanFinding]:
@@ -106,9 +146,10 @@ def run_scan(self, scan_id: str):
             )
             session.add(db_finding)
 
-        # Update scan status
+        # Update scan status and counts
         scan.status = ScanStatus.COMPLETED
         scan.risk_score = calculate_risk_score(findings)
+        
         scan.completed_at = datetime.now(timezone.utc)
         session.commit()
 
